@@ -1,0 +1,62 @@
+
+litp create -p /ms/configs/fw -t firewall-node-config
+
+# port REGEX checks
+assertErrorMessage 'ValidationError in property: "dport"' create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport="-"
+#assertErrorMessage 'ValidationError in property: "dport"' create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport=","
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport=",,"
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport=",,"
+assertErrorMessage 'ValidationError in property: "dport"' create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport="123,,234"
+assertErrorMessage 'ValidationError in property: "dport"' create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport="123,-234"
+assertErrorMessage 'ValidationError in property: "dport"' create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport="123--234"
+litp create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="023 puppet" dport="22"
+
+# source / destination property validation
+assertErrorMessage "Invalid combination of an IPv4 address and an IPv6 address for the 'source' and 'destination' properties" create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="191" source=10.10.01.0/24 destination=fe80::a00:27ff:febc:c8e1
+
+# destination / source property validation
+assertErrorMessage "Invalid combination of an IPv6 address and an IPv4 address for the 'destination' and 'source' properties" create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="191" source=fe80::a00:27ff:febc:c8e1 destination=10.10.01.0/24
+
+# iptables provider / source prop validation
+assertErrorMessage "Invalid combination of iptables and an IPv6 address for the 'provider' and 'source' properties" create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="191" provider=iptables source=fe80::a00:27ff:febc:c8e1
+
+# iptables provider / destination prop validation
+assertErrorMessage "Invalid combination of iptables and an IPv6 address for the 'provider' and 'destination' properties" create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="191" provider=iptables destination=fe80::a00:27ff:febc:c8e1
+#
+
+# no provider ipv4 address
+assertErrorMessage "Invalid combination of no provider and an IPv4 address for the 'provider' and 'source / destination' properties. (Please set provider to 'iptables')" create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="19122,80,111,443,25151,9999" source=10.10.01.0/24 destination=10.10.01.0/24
+# no provider ipv6 address
+assertErrorMessage "Invalid combination of no provider and an IPv6 address for the 'provider' and 'source / destination' properties. (Please set provider to 'ip6tables')" create -p /ms/configs/fw/rules/fw002 -t firewall-rule -o name="002 basetcp" dport="19122,80,111,443,25151,9999" source=1fe80::a00:27ff:febc:c8e destination=1fe80::a00:27ff:febc:c8e
+
+# valid ipv4 combination
+litp create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name="001 basetcp" dport="19122,80,111,443,25151,9999" source=10.10.01.0/24 destination=10.10.01.0/24 provider="iptables"
+
+# too many port (limit = 15)
+assertErrorMessage "A maximum of 15 ports are accepted." create -p /ms/configs/fw/rules/fw003 -t firewall-rule -o name="002 basetcp" dport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+litp create -p /ms/configs/fw/rules/fw003 -t firewall-rule -o name="002 basetcp" dport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15"
+litp create -p /ms/configs/fw/rules/fw004 -t firewall-rule -o name="002 basetcp" dport="1,2,3,4,5,6,7,8,9,10,11,12,13,14"
+
+# invalid range values
+assertErrorMessage "Invalid range value '12.45.239.84' must come before '12.45.239.21'" create -t firewall-rule -p /ms/configs/fw/rules/fw_test3 -o name="017 test3" dport="30000-65000" provider="iptables" proto="udp" source="12.45.239.84-12.45.239.21"
+assertErrorMessage " Invalid range value 'ffff-ffff'" create -t firewall-rule -p /ms/configs/fw/rules/fw_test3 -o name="017 test3" dport="30000-65000" provider="iptables" proto="udp" source="ffff-ffff"
+
+# invalid table for SNAT
+assertErrorMessage "Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT." create -t firewall-rule -p /ms/configs/fw/rules/fw_snat -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.88.0/21" proto=tcp tosource="10.140.88.236" table=raw
+
+# invalid chain for SNAT
+assertErrorMessage "Invalid combination of properties, 'chain' must be set to POSTROUTING when 'jump' is set to SNAT." create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o provider=iptables name="903 SNAT" jump="SNAT" chain="PREROUTING"  source="10.247.244.0/22" destination="10.140.88.0/21" proto=tcp tosource="10.140.88.236" table=nat
+
+# missing tosource for SNAT
+assertErrorMessage "Missing 'tosource' property when using 'jump' = SNAT." create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.88.0/21" proto=tcp table=nat
+
+# Invalid action
+assertErrorMessage "Invalid value 'acceptdropreject'. Property must be either 'accept', 'drop' or 'reject'" create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o name="904 SNAT" action="acceptdropreject"
+assertErrorMessage "Invalid value 'Reject'. Property must be either 'accept', 'drop' or 'reject'" create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o name="904 SNAT" action="Reject"
+assertErrorMessage "Invalid value 'REJECT'. Property must be either 'accept', 'drop' or 'reject'" create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o name="904 SNAT" action="REJECT"
+assertErrorMessage "Invalid value 'r3j3ct'. Property must be either 'accept', 'drop' or 'reject'" create -t firewall-rule -p /ms/configs/fw/rules/fw_snat1 -o name="904 SNAT" action="r3j3ct"
+
+# Positive tests to check for supported action values
+litp create -t firewall-rule -p /ms/configs/fw/rules/fw_accept -o name="904 SNAT" action="accept"
+litp create -t firewall-rule -p /ms/configs/fw/rules/fw_drop -o name="904 SNAT" action="drop"
+litp create -t firewall-rule -p /ms/configs/fw/rules/fw_reject -o name="904 SNAT" action="reject"

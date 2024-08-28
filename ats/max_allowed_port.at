@@ -1,0 +1,6 @@
+
+litp create -p /ms/configs/fw -t firewall-node-config
+
+litp create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="021 puppet" dport=65535
+litp create -p /ms/configs/fw/rules/fw_basetcp2 -t firewall-rule -o name="022 puppet" dport="65534,65535"
+assertError --err_message "Invalid value '65536'" create -p /ms/configs/fw/rules/fw_basetcp3 -t firewall-rule -o name="023 puppet" dport="65536"

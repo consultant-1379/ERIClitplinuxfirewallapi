@@ -1,0 +1,27 @@
+
+litp create -t firewall-node-config -p /ms/configs/fw_config
+
+# Some example rules
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_basetcp -o name="001 basetcp" dport="111,443,3000,25151"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_nfstcp -o name="002 nfstcp" dport="662,875,2020,2049,4001,4045"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_hyperic -o name="003 hyperic" dport="2144,7080,7443"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_syslog -o name="004 syslog" dport="514"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_baseudp -o name="010 baseudp" dport="111,123,623,1129,9876,25151" proto="udp"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_nfsudp -o name="011 nfsudp" dport="662,875,2020,2049,4001,4045" proto="udp"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_icmp -o name="100 icmp" proto="icmp"
+
+# Examples of ranges:
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test1 -o name="015 test1" dport="30000-65000" proto="udp" provider="iptables" source="10.45.239.84-10.45.239.85" destination="10.45.239.85-10.45.239.87"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test2 -o name="017 test2" dport="30000-65000" proto="udp" provider="iptables" source="11.45.239.84-11.45.239.85" destination="10.45.239.85"
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test3 -o name="017 test3" dport="30000-65000" provider="iptables" proto="udp" source="12.45.239.84-12.45.239.91"
+
+# Example of adding a rule to the nat table:
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_nattest -o name="100 nattest" chain="PREROUTING" proto="udp" dport="162" jump="REDIRECT" table="nat" toports="30162" provider="iptables"
+
+# Example of adding a rule to the mangle table for DSCP:
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_mangle -o name="088 mangle" sport="22" table="mangle" jump="DSCP" setdscp="0x10" chain="OUTPUT" proto="tcp"
+
+# Example LOG firewall rule
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_log -o name="902 log" jump="LOG" log_level="warning" log_prefix="IPTABLES_DROPPED_PACKET"
+# Example SNAT  firewall rule
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_snat -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.88.0/21" proto=tcp tosource="10.140.88.236" table=nat

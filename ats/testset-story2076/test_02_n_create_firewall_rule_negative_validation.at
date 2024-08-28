@@ -1,0 +1,221 @@
+##Test validation errors at "create"
+##Rule 58 is in ERIClitplinuxfirewallapi
+##
+
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw1
+
+# 1. Name set to empty
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name=""
+
+# 2. Name contains underscores
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value '1_test'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1_test"
+
+# 3. Name set to all capitals
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'ABC'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="ABC"
+
+# 4. Name does not start with number
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'test'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name=test
+
+# 4a.Name does not contain space
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value '21test'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="21test"
+
+# 4b.Name does not contain chain number
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'testa testb'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="testa testb"
+
+# 4c.Name does not contain chain number or space
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'testab'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="testab"
+
+# 5. proto is empty
+assertError --err_type "ValidationError" --err_property "proto" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" proto=""
+
+# 6. proto set to uppercase
+assertError --err_type "ValidationError" --err_property "proto" --err_message "Invalid value 'ICMP'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" proto=ICMP
+
+# 7. action set to empty
+assertError --err_type "ValidationError" --err_property "action" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" action=""
+
+# 8. action set to unsupported value
+assertError --err_type "ValidationError" --err_property "action" --err_message "Invalid value 'ACCEPT'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" action=ACCEPT
+
+# 9. sport is empty
+assertError --err_type "ValidationError" --err_property "sport" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" sport=""
+
+# 10. sport contains unsupported characters
+assertError --err_type "ValidationError" --err_property "sport" --err_message "Invalid value 'abc'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" sport=abc
+
+# 11. dport is empty
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" dport=""
+
+# 11a.dport assigned value exceeds the max allowed value
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value '12345,2,3,4,5,67890,7,8'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test " dport=12345,2,3,4,5,67890,7,8
+
+# 12. dport contains unsupported characters
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value 'abc'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" dport=abc
+
+# 13.state is empty
+assertError --err_type "ValidationError" --err_property "state" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" state=""
+
+# 14.source is empty
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source=""
+
+# 15.source set to unsupported value
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid value '_'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source=_
+
+# 16.limit is empty
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" limit=""
+
+# 17.limit set to unsupported value
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value '_'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" limit=_
+
+# 18.table is empty
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" table=""
+
+# 19.table set to unsupported value
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'input'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" table=input
+
+# 20.table set to unsupported value
+assertError --err_type "ValidationError" --err_property "destination" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination=""
+
+# 21.destination contains unsupported value
+assertError --err_type "ValidationError" --err_property "destination" --err_message "Invalid value '192,123,122,11'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination=192,123,122,11
+
+# 22.iniface is empty
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" iniface=""
+
+# 23.iniface ontains unsupported characters
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value 'eth,1'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" iniface=eth,1
+
+# 24.iniface contains .
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value '123,123'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" iniface="123,123"
+
+# 25.outiface is empty
+assertError --err_type "ValidationError" --err_property "outiface" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" outiface=""
+
+# 26.outiface ontains unsupported characters
+assertError --err_type "ValidationError" --err_property "outiface" --err_message "Invalid value 'eth,1'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" outiface=eth,1
+
+# 27.icmp is empty
+assertError --err_type "ValidationError" --err_property "icmp" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" icmp=""
+
+# 28.icmp set to unsupported value
+assertError --err_type "ValidationError" --err_property "icmp" --err_message "Invalid value 'echo-REPLY'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" icmp=echo-REPLY
+
+# 29.chain is empty
+assertError --err_type "ValidationError" --err_property "chain" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" chain=""
+
+# 30.chain set to unsupported value
+assertError --err_type "ValidationError" --err_property "chain" --err_message "Invalid value 'output'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" chain=output
+
+# 31.provider is empty
+assertError --err_type "ValidationError" --err_property "provider" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" provider=""
+
+# 32.provider set to unsupported value
+assertError --err_type "ValidationError" --err_property "provider" --err_message "Invalid value 'rubbish'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" provider=rubbish
+
+# 33.log_level is empty
+assertError --err_type "ValidationError" --err_property "log_level" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" log_level=""
+
+# 34.log_level set to unsupported value
+assertError --err_type "ValidationError" --err_property "log_level" --err_message "Invalid value 'INFO'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" log_level=INFO
+
+# 35.log_prefix is empty
+assertError --err_type "ValidationError" --err_property "log_prefix" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" log_prefix=""
+
+# 36.log_prefix contains unsupported value 9
+assertError --err_type "ValidationError" --err_property "log_prefix" --err_message "Invalid value 'INFO_9'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" log_prefix=INFO_9
+
+# 37.jump is empty
+assertError --err_type "ValidationError" --err_property "jump" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" jump=""
+
+# 38.jump set to unsupported value
+assertError --err_type "ValidationError" --err_property "jump" --err_message "Invalid value '123'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" jump=123
+
+# 39.Toports is empty
+assertError --err_type "ValidationError" --err_property "toports" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" toports=""
+
+# 40.Toports set to invalid value
+assertError --err_type "ValidationError" --err_property "toports" --err_message "Invalid value 'Abc'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" toports=Abc
+
+# 41.setdscp is empty
+assertError --err_type "ValidationError" --err_property "setdscp" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" setdscp=""
+
+# 42.setdscp set to invalid value
+assertError --err_type "ValidationError" --err_property "setdscp" --err_message "Invalid value '01'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" setdscp=01
+
+# 43.limit is empty
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value ''." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" limit=""
+
+# 44.limit set to invalid
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value '5c'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" limit=5c
+
+# 44b "table" set to invalid "rawpost"
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'rawpost'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="102 rawpost" chain="PREROUTING" table="rawpost"
+
+# 44c "table" set to invalid "broute"
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'broute'." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="102 rawpost" chain="PREROUTING" table="broute"
+
+# 45. invalid combination of provider and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of ip6tables and an IPv4 address for the 'provider' and 'destination' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination="10.10.10.10" provider="ip6tables"
+
+# 46. invalid combination of provider and source
+assertError --err_type "ValidationError" --err_message "Invalid combination of ip6tables and an IPv4 address for the 'provider' and 'source' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source="10.10.10.10" provider="ip6tables"
+
+# 47. invalid combination of provider and source
+assertError --err_type "ValidationError" --err_message "Invalid combination of iptables and an IPv6 address for the 'provider' and 'source' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source="fe80::a00:27ff:febc:c8e1/64" provider="iptables"
+
+# 48. invalid combination of provider and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of iptables and an IPv6 address for the 'provider' and 'destination' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination="fe80::a00:27ff:febc:c8e1" provider="iptables"
+
+# 49. invalid combination of source and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of an IPv6 address and an IPv4 address for the 'destination' and 'source' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source="fe80::a00:27ff:febc:c8e1" destination="10.10.10.5"
+
+# 50. invalid combination of source and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of an IPv4 address and an IPv6 address for the 'source' and 'destination' properties." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination="fe80::a00:27ff:febc:c8e1" source="10.10.10.5"
+
+# 51. Sport list too big
+assertError --err_type "ValidationError" --err_property "sport" --err_message "A maximum of 15 ports are accepted." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" sport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 52. Dport list too big
+assertError --err_type "ValidationError" --err_property "dport" --err_message "A maximum of 15 ports are accepted." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" dport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 53. Toports list too big
+assertError --err_type "ValidationError" --err_property "toports" --err_message "A maximum of 15 ports are accepted." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" toports="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 54. Invalid source range
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid range value '10.10.10.10' must come before '10.10.10.5'" create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" source="10.10.10.10-10.10.10.5" provider="iptables"
+
+# 55.destination contains unsupported range
+assertError --err_type "ValidationError" --err_message "Invalid combination of no provider and an IPv4 address for the 'provider' and 'source / destination' properties. (Please set provider to 'iptables')" create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="1 test" destination="10.10.1010-10.10.10.5"
+
+# 56a. Check reserved chain number: '990 related established'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'990' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="990 related established"
+
+# 56b. Check reserved chain number: '991 local loop'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'991' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="991 local loop"
+
+# 56c. Check reserved chain number: '992 ipmi'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'992' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="992 ipmi"
+
+# 56d. Check reserved chain number: '993 puppet'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'993' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="993 puppet"
+
+# 56e. Check reserved chain number: '994 mco'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'994' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="994 mco"
+
+# 56f. Check reserved chain number: '995 ntp'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'995' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="995 ntp"
+
+# 56g. Check reserved chain number: '996 http'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'996' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="996 http"
+
+# 56h. Check reserved chain number: '997 cobblerudp'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'997' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="997 cobblerudp"
+
+# 56i. Check reserved chain number: '998 ssh'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'998' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="998 ssh"
+
+# 56j. Check reserved chain number: '999 drop all'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'999' is a reserved chain number for default rules." create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw002n -o name="999 drop all"

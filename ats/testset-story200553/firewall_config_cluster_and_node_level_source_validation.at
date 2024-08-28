@@ -1,0 +1,41 @@
+# Test validation for source property
+runLitpScript two-node-std.inc
+
+# Set up source item property error messages
+let __source_err --err_type ValidationError --err_property source --err_message 'Invalid value'
+let __source_err_range_neg --err_type ValidationError --err_property source --err_message 'IP ranges are not supported with negation.'
+
+# Create firewall config for cluster and node level
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw
+litp create -t firewall-node-config -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw
+
+# Check firewall rule validation, cluster level, when source property is invalid. Algo and string properties are set.
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42!' algo='kmp' string='test string 200553'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42/20!' algo='kmp' string='test string 200553'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42-192.168.0.44!' algo='kmp' string='test string 200553'
+
+# Check firewall rule validation, node level, when source property is invalid. Algo and string properties are set.
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42!' algo='kmp' string='test string 200553'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42/20!' algo='kmp' string='test string 200553'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42-192.168.0.44!' algo='kmp' string='test string 200553'
+
+# Check firewall rule validation, cluster level, when source property is invalid. Algo and string properties are not set.
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42!'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42/20!'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42-192.168.0.44!'
+
+# Check firewall rule validation, node level, when source property is invalid. Algo and string properties are notset.
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42!'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42/20!'
+assertError __source_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='192.168.0.42-192.168.0.44!'
+
+# Check firewall rule validation, node level, when source property with range is negated.
+assertError __source_err_range_neg create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='!192.168.0.1-192.168.0.100'
+assertError __source_err_range_neg create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule -o name="200553 test" source='!  192.168.0.1-192.168.0.100'
+
+# Postitive test cases
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule1 -o name="200553 test" source="192.168.0.1" provider="iptables"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule2 -o name="200553 test" source="!192.168.0.1" provider="iptables"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule3 -o name="200553 test" source="192.168.0.1/20" provider="iptables"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule4 -o name="200553 test" source="!192.168.0.1/20" provider="iptables"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_rule5 -o name="200553 test" source="192.168.0.0-192.168.0.101" provider="iptables"

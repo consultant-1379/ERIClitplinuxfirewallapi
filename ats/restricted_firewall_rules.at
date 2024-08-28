@@ -1,0 +1,23 @@
+
+litp create -p /ms/configs/fw -t firewall-node-config
+
+# Restricted rule names
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="990 puppet" dport="22,80,111,443,3000,25151,9999"
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="991 puppet out" dport="22,80,111,443,3000,25151,9999"
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="992 puppet out" dport="22,80,111,443,3000,25151,9999"
+assertError create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="999 puppet out" dport="22,80,111,443,3000,25151,9999"
+
+# Valid MS node config
+litp create -p /ms/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="001 basetcp" dport="22,80,111,443,3000,25151,9999"
+
+litp create -t deployment -p /deployments/local_vm
+litp create -t cluster -p /deployments/local_vm/clusters/cluster1
+litp create -t node -p /deployments/local_vm/clusters/cluster1/nodes/node1 -o hostname=node1
+
+# Valid node config
+litp create -p /deployments/local_vm/clusters/cluster1/nodes/node1/configs/fw -t firewall-node-config
+litp create -p /deployments/local_vm/clusters/cluster1/nodes/node1/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="001 basetcp" dport="22,80,111,443,3000,25151,9999"
+
+# Valid cluster config
+litp create -p /deployments/local_vm/clusters/cluster1/configs/fw -t firewall-cluster-config
+litp create -p /deployments/local_vm/clusters/cluster1/configs/fw/rules/fw_basetcp1 -t firewall-rule -o name="001 basetcp" dport="22,80,111,443,3000,25151,9999"

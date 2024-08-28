@@ -1,0 +1,344 @@
+##Test valid updates to firewall rule validation
+##
+
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+#Initial config
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw1
+
+#Initial rule that is created, updated and removed
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name='016 test16'
+
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 test16" proto="udp" action="accept" sport="245" dport=1234-5678 state="RELATED" source=10.10.01.0/24 destination=129.167.122.99 provider=iptables iniface=l0 outiface=l0 icmp=8 chain=FORWARD log_level=crit log_prefix=String jump=LOG table=raw toports=17,2,33,2 setdscp=0xFE1 limit=5/sec
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 test16" proto="udp" action="accept" sport="245" dport=1234-5678 state="RELATED" source=10.10.01.0/24 destination=129.167.122.99 provider=iptables iniface=l0 outiface=l0 icmp=8 chain=FORWARD log_level=crit log_prefix=String jump=LOG table=raw toports=17,2,33,2 setdscp=0xFE1 limit=5/sec
+
+litp remove -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016
+assertNone -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016
+
+# Initial rule with all properties that will be updated during test
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 test16" action="drop" sport="1234-5678" dport="234-345" state="INVALID" provider="iptables" log_prefix="Valid_String"
+
+# 2.Update a rules mandatory properties
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 testing"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 testing"
+
+# 5.Update a rule with Name contains uppercase
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 NAME"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 NAME"
+
+# 6.Update a rule with Name contains multiple spaces
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 NAME "
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 NAME"
+
+# 6a.Update a rule with Name begins with one digit
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="2 1name"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="2 1name"
+
+# 6b.Update a rule with Name containing position only
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160"
+
+# 6c.Update a rule with Name containing one digit position only
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="6"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="6"
+
+# 6d.Update a rule with Name containing a 2 digit position only
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="16"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="16"
+
+# 6e.Update a rule with Name begins with a space
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name=" 160 name"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="160 name"
+
+# 6f.Update a rule with Name containing a chain number only and exceeding the max length
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="5447"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="5447"
+
+# 6g.Update Name to contain chain number exceeding the max lengthand to begin with a zero
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="01234"
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o name="01234"
+
+# 7.Update proto from none to udp
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=udp
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=udp
+
+# 8.Update proto from udp to ospf
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=ospf
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=ospf
+
+# 9.Update proto from ospf to ipv6-icmp
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=ipv6-icmp
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=ipv6-icmp
+
+# 10.Update proto from ipv6-icmp to all
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=all
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o proto=all
+
+# 14.Update action from drop to accept
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o action=accept
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o action=accept
+
+# 15.Update action from accept to drop
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o action=accept
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o action=accept
+
+# 16.Update source port from a range to a single entry
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=1
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=1
+
+# 17.Update source port from a single entry to multiple entries
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=1,2,3,4,5,6,7,8
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=1,2,3,4,5,6,7,8
+
+# 18.Update source port from multiple entries to a range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=134-567
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o sport=134-567
+
+# 19.Update destination port from a range to a single entry
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=12345
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=12345
+
+# 20.Update destination port from a single entry to multiple entries
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=12345,2,3,4,5,7,8
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=12345,2,3,4,5,7,8
+
+# 21.Update destination port from multiple entries to a range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=1234-5678
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o dport=1234-5678
+
+# 22.Update state from INVALID to NEW
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=NEW
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=NEW
+
+# 23.Update state from NEW to ESTABLISHED
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=ESTABLISHED
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=ESTABLISHED
+
+# 24.Update state from ESTABLISHED to RELATED
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=RELATED
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=RELATED
+
+# 25.Update state from RELATED to INVALID
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=INVALID
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=INVALID
+
+# 26.Update state from INVALID to NEW,ESTABLISHED,RELATED
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=NEW,ESTABLISHED,RELATED
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=NEW,ESTABLISHED,RELATED
+
+# 27.Update state from NEW,ESTABLISHED,RELATED to ESTABLISHED,RELATED
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=ESTABLISHED,RELATED
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=ESTABLISHED,RELATED
+
+# 28.Update state from ESTABLISHED,RELATED to RELATED,ESTABLISHED
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=RELATED,ESTABLISHED
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o state=RELATED,ESTABLISHED
+
+# 29.Update source port from none to valid IPv4 address
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=129.167.122.99 provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=129.167.122.99 provider=iptables
+
+# 30.Update Source port from a valid IPv4 address to valid IPv6 range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+
+# 31.Update Source port from none to a valid IPv4 subnet
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=10.10.01.0/24 provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=10.10.01.0/24 provider=iptables
+
+# 32.Update Source port from a valid IPv4 subnet to a valid IPv6 address
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=1:1:1:1 provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=1:1:1:1 provider=ip6tables
+
+# 33.Update Source port from a valid IPv6 address to a valid IPv6 subnet
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+
+# 34.Update Source port from none to valid IPv6 range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+
+# 35.Update Source port from none to a valid IPv6 subnet
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -d source
+assertPropertyUnset -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o source
+
+# 36.Update destination port from none to valid IPv4 address
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=129.167.122.99 provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=129.167.122.99 provider=iptables
+
+# 37.Update destination port from a valid IPv4 addresss to valid IPv4 range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=10.10.10.5-10.10.10.10 provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=10.10.10.5-10.10.10.10 provider=iptables
+
+# 38.Update destination port from a valid IPv4 range to valid IPv4 subnet
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=10.10.01.0/24 provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=10.10.01.0/24 provider=iptables
+
+# 39.Update destination port from none to valid IPv6 address
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=1:1:1:1 provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=1:1:1:1 provider=ip6tables
+
+# 40.Update destination port from a valid IPv6 address to valid IPv6 range
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=FF02:0:0:0:0:1:FF00:0000-FF02:0:0:0:0:1:FFFF:FFFF provider=ip6tables
+
+# 41.Update destination port from a valid IPv6 range to valid IPv6 subnet
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination=fe80::a00:27ff:febc:c8e1/64 provider=ip6tables
+
+# 42.Update provider from ip6tables to none
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=ip6tables
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -d destination,provider
+assertPropertyUnset -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o destination,provider
+
+# 43.Update IN interface from none to eth0
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o iniface=eth0
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o iniface=eth0
+
+# 44.Update IN interface from eth0 to l0
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o iniface=l0
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o iniface=l0
+
+# 45.Update OUT interface from none to eth0
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o outiface=eth0
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o outiface=eth0
+
+# 46.Update OUT interface from eth0 to l0
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o outiface=l0
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o outiface=l0
+
+# 47.Update ICMP type from none to 0
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=0
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=0
+
+# 48.Update ICMP type from 0 to 8
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=8
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=8
+
+# 49.Update ICMP type from 8 to echo-reply
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=echo-reply
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=echo-reply
+
+# 50.Update ICMP type from echo-reply to echo-request
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=echo-request
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o icmp=echo-request
+
+# 51.Update Chain type from none to INPUT
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=INPUT
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=INPUT
+
+# 52.Update Chain type from INPUT to OUTPUT
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=OUTPUT
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=OUTPUT
+
+# 53.Update Chain type from OUTPUT to FORWARD
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=FORWARD
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=FORWARD
+
+# 54.Update Chain type from FORWARD to PREROUTING
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=PREROUTING
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=PREROUTING
+
+# 55.Update Chain type from PREROUTING to POSTROUTING
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=POSTROUTING
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=POSTROUTING
+
+# 56.Update Chain type from POSTROUTING to none
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=POSTROUTING
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain=POSTROUTING
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -d chain
+assertPropertyUnset -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o chain
+
+# 57.Update provider from none to iptables
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=iptables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=iptables
+
+# 58.Update provider from iptables to ip6tables
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=ip6tables
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o provider=ip6tables
+
+# 59.Update Log Level from none to panic
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=panic
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=panic
+
+# 60.Update Log Level from panic to alert
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=alert
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=alert
+
+# 61.Update Log Level from alert to crit
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=crit
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=crit
+
+# 62.Update Log Level from crit to err
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=err
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=err
+
+# 63.Update Log Level from err to warn
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=warn
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=warn
+
+# 64.Update Log Level from warn to warning
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=warning
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=warning
+
+# 65.Update Log Level from warning to notice
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=notice
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=notice
+
+# 66.Update Log Level from notice to info
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=info
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=info
+
+# 67.Update Log Level from info to debug
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=debug
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=debug
+
+# 68.Update Log Level from debug to none
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=debug
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level=debug
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -d log_level
+assertPropertyUnset -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_level
+
+# 69.Update Log Prefix set to valid string
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_prefix=Valid_String
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o log_prefix=Valid_String
+
+# 70.Update Jump from to valid string
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o jump=Valid_String
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o jump=Valid_String
+
+# 71.Update table from none to nat
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=nat
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=nat
+
+# 72.Update table from nat to filter
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=filter
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=filter
+
+# 73.Update table from filter to mangle
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=mangle
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=mangle
+
+# 74.Update table from mangle to raw
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=raw
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o table=raw
+
+# 75.Update toports from to valid number
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o toports=124
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o toports=124
+
+# 76.Update limit to valid string
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o limit=5/sec
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o limit=5/sec
+
+# 77.Update limit from one valid string to another valid string
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o limit=56/day
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o limit=56/day
+
+# 78.Update setdscp to valid hexstring
+litp update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o setdscp=0xFE1
+assertProperty /deployments/site1/clusters/cluster1/configs/fw1/rules/fw016 -o setdscp=0xFE1

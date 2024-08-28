@@ -1,0 +1,225 @@
+##Test invalid updates to firewall rule and validation errors
+##
+
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw1
+
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="171 test17" proto="icmp" action="accept" sport="1123" dport="65531" state="NEW" source="129.167.122.99" destination="129.167.122.99" iniface="eth0" outiface="eth0" icmp="echo-reply" chain="INPUT" provider="iptables" log_level="panic" log_prefix="Valid_String"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o name="172 test17"
+
+# 1. Update Name to empty
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name=""
+
+# 2. Update name with an underscores
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value '1_test'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="1_test"
+
+# 3. Update name to all capitals
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'ABC'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="ABC"
+
+# 4. Update to a name that does not start with number
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'test'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name=test
+
+# 4a.Update Name to not contain space
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value '21test'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="21test"
+
+# 4b.Update Name to not contain chain number
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'testa testb'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="testa testb"
+
+# 4c.Update Name to not contain chain number or space
+assertError --err_type "ValidationError" --err_property "name" --err_message "Invalid value 'testab'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="testab"
+
+# 5. Update proto to empty
+assertError --err_type "ValidationError" --err_property "proto" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="170 test17" proto=""
+
+# 6. Update proto to uppercase
+assertError --err_type "ValidationError" --err_property "proto" --err_message "Invalid value 'ICMP'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="170 test17" proto=ICMP
+
+# 7. Update action to empty
+assertError --err_type "ValidationError" --err_property "action" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="170 test17" action=""
+
+# 8. Update action to an unsupported value
+assertError --err_type "ValidationError" --err_property "action" --err_message "Invalid value 'ACCEPT'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o action=ACCEPT
+
+# 9. Update sport to empty
+assertError --err_type "ValidationError" --err_property "sport" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o sport=""
+
+# 10. Update sport with unsupported characters
+assertError --err_type "ValidationError" --err_property "sport" --err_message "Invalid value 'abc'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o sport=abc
+
+# 11. Update dport to empty
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o dport=""
+
+# 11a.Update dport to exceed max allowed value
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value '67890'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o dport="67890"
+
+# 12. Update dport to contain unsupported characters
+assertError --err_type "ValidationError" --err_property "dport" --err_message "Invalid value 'abc'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o dport=abc
+
+# 13. Update state to empty
+assertError --err_type "ValidationError" --err_property "state" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o state=""
+
+# 14. Update source to empty
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o source=""
+
+# 15. Update source to an unsupported value
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid value '_'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o source=_
+
+# 16. Update limit to empty
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o limit=""
+
+# 17. Update limit to an unsupported value
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value '_'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o limit=_
+
+# 18. Update table to empty
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o table=""
+
+# 19. Update table to an unsupported value
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'input'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o table=input
+
+# 20. Update table to an unsupported value
+assertError --err_type "ValidationError" --err_property "destination" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o destination=""
+
+# 21. Update destination to an unsupported value
+assertError --err_type "ValidationError" --err_property "destination" --err_message "Invalid value '192,123,122,11'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o destination=192,123,122,11
+
+# 22. Update iniface to empty
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o iniface=""
+
+# 23. Update iniface to contain an unsupported characters
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value 'eth,1'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o iniface=eth,1
+
+# 24. Update iniface to contain .
+assertError --err_type "ValidationError" --err_property "iniface" --err_message "Invalid value '123,123'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o iniface="123,123"
+
+# 25. Update outiface to empty
+assertError --err_type "ValidationError" --err_property "outiface" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o outiface=""
+
+# 26. Update outiface to contain an unsupported characters
+assertError --err_type "ValidationError" --err_property "outiface" --err_message "Invalid value 'eth,1'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o outiface=eth,1
+
+# 27. Update icmp to empty
+assertError --err_type "ValidationError" --err_property "icmp" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o icmp=""
+
+# 28. Update icmp set to an unsupported value
+assertError --err_type "ValidationError" --err_property "icmp" --err_message "Invalid value 'echo-REPLY'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o icmp=echo-REPLY
+
+# 29. Update chain to empty
+assertError --err_type "ValidationError" --err_property "chain" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o chain=""
+
+# 30. Update chain to an unsupported value
+assertError --err_type "ValidationError" --err_property "chain" --err_message "Invalid value 'output'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o chain=output
+
+# 31. Update provider to empty
+assertError --err_type "ValidationError" --err_property "provider" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o provider=""
+
+# 32. Update provider to an unsupported value
+assertError --err_type "ValidationError" --err_property "provider" --err_message "Invalid value 'rubbish'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o provider=rubbish
+
+# 33. Update log_level to empty
+assertError --err_type "ValidationError" --err_property "log_level" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o log_level=""
+
+# 34. Update log_level to an unsupported value
+assertError --err_type "ValidationError" --err_property "log_level" --err_message "Invalid value 'INFO'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o log_level=INFO
+
+# 35. Update log_prefix to empty
+assertError --err_type "ValidationError" --err_property "log_prefix" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o log_prefix=""
+
+# 36. Update log_prefix to contain an unsupported value 9
+assertError --err_type "ValidationError" --err_property "log_prefix" --err_message "Invalid value 'INFO_9'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o log_prefix=INFO_9
+
+# 37. Update jump to empty
+assertError --err_type "ValidationError" --err_property "jump" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o jump=""
+
+# 38. Update jump to an unsupported value
+assertError --err_type "ValidationError" --err_property "jump" --err_message "Invalid value '123'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o jump=123
+
+# 39. Update toports to empty
+assertError --err_type "ValidationError" --err_property "toports" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o toports=""
+
+# 40. Update toports to an invalid value
+assertError --err_type "ValidationError" --err_property "toports" --err_message "Invalid value 'Abc'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o toports=Abc
+
+# 41. Update setdscp to empty
+assertError --err_type "ValidationError" --err_property "setdscp" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o setdscp=""
+
+# 42. Update setdscp to an invalid value
+assertError --err_type "ValidationError" --err_property "setdscp" --err_message "Invalid value '01'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o setdscp=01
+
+# 43. Update limit to empty
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value ''." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o limit=""
+
+# 44. Update limit to be invalid
+assertError --err_type "ValidationError" --err_property "limit" --err_message "Invalid value '5c'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o limit=5c
+
+# 44b. Update "table" set to invalid "rawpost"
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'rawpost'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="102 rawpost" chain="PREROUTING" table="rawpost"
+
+# 44c. Update "table" set to invalid "broute"
+assertError --err_type "ValidationError" --err_property "table" --err_message "Invalid value 'broute'." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="102 rawpost" chain="PREROUTING" table="broute"
+
+## 2. Invalid combination of property values
+
+# 45. Update rule to have an invalid combination of provider and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of ip6tables and an IPv4 address for the 'provider' and 'destination' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o destination="10.10.10.10" provider="ip6tables"
+
+# 46. Update rule to have an invalid combination of provider and source
+assertError --err_type "ValidationError" --err_message "Invalid combination of ip6tables and an IPv4 address for the 'provider' and 'source' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o source="10.10.10.10" provider="ip6tables"
+
+# 47. Update rule to have an invalid combination of provider and source
+assertError --err_type "ValidationError" --err_message "Invalid combination of iptables and an IPv6 address for the 'provider' and 'source' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o source="fe80::a00:27ff:febc:c8e1/64" provider="iptables"
+
+# 48. Update rule to have an invalid combination of provider and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of iptables and an IPv6 address for the 'provider' and 'destination' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o destination="fe80::a00:27ff:febc:c8e1" provider="iptables"
+
+# 49. Update rule to have an invalid combination of source and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of an IPv6 address and an IPv4 address for the 'destination' and 'source' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o source="fe80::a00:27ff:febc:c8e1" destination="10.10.10.5"
+
+# 50. Update rule to have an invalid combination of source and destination
+assertError --err_type "ValidationError" --err_message "Invalid combination of an IPv4 address and an IPv6 address for the 'source' and 'destination' properties." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o destination="fe80::a00:27ff:febc:c8e1" source="10.10.10.5"
+
+# 51. Update rule to have sport list >15
+assertError --err_type "ValidationError" --err_property "sport" --err_message "A maximum of 15 ports are accepted." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o sport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 52. Update rule to have dport list >15
+assertError --err_type "ValidationError" --err_property "dport" --err_message "A maximum of 15 ports are accepted." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o dport="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 53. Update rule to have toports list >15
+assertError --err_type "ValidationError" --err_property "toports" --err_message "A maximum of 15 ports are accepted." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o toports="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"
+
+# 54. Update rule to have a source with an invalid range
+assertError --err_type "ValidationError" --err_property "source" --err_message "Invalid range value '10.10.10.10' must come before '10.10.10.5'" update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o source="10.10.10.10-10.10.10.5" provider="iptables"
+
+# 55. Update rule to have destination containing an unsupported range
+assertError --err_type "ValidationError" --err_message "Invalid combination of no provider and an IPv4 address for the 'provider' and 'source / destination' properties. (Please set provider to 'iptables')" update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017b -o destination="10.10.1010-10.10.10.5"
+
+# 56a. Check reserved chain number: '990 related established'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'990' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="990 related established"
+
+# 56b. Check reserved chain number: '991 local loop'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'991' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="991 local loop"
+
+# 56c. Check reserved chain number: '992 ipmi'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'992' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="992 ipmi"
+
+# 56d. Check reserved chain number: '993 puppet'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'993' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="993 puppet"
+
+# 56e. Check reserved chain number: '994 mco'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'994' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="994 mco"
+
+# 56f. Check reserved chain number: '995 ntp'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'995' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="995 ntp"
+
+# 56g. Check reserved chain number: '996 http'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'996' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="996 http"
+
+# 56h. Check reserved chain number: '997 cobblerudp'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'997' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="997 cobblerudp"
+
+# 56i. Check reserved chain number: '998 ssh'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'998' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="998 ssh"
+
+# 56j. Check reserved chain number: '999 drop all'
+assertError --err_type "ValidationError" --err_property "name" --err_message "'999' is a reserved chain number for default rules." update -p /deployments/site1/clusters/cluster1/configs/fw1/rules/fw_tc017a -o name="999 drop all"

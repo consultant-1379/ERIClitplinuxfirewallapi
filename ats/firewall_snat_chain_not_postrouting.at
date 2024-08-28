@@ -1,0 +1,7 @@
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+# Test for rule created with jump=SNAT and tosource parameter not present
+litp create -t firewall-node-config -p /ms/configs/fw_config
+let __err_a --err_message="Invalid combination of properties, 'chain' must be set to POSTROUTING when 'jump' is set to SNAT."
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test2 -o provider=iptables name="903 SNAT" jump="SNAT" chain="INPUT"  source="10.247.244.0/22" destination="10.140.1.0/24" tosource="10.140.1.56" proto=tcp table=nat

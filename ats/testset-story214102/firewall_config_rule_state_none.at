@@ -1,0 +1,23 @@
+# Tests to ensure correct validation around algo and string properties
+runLitpScript two-node-std.inc
+
+# Set up state property validation error
+let __state_err --err_type ValidationError --err_property state --err_message "Invalid value"
+let __state_without_port_err --err_type ValidationError --err_message "State 'none' cannot be set without the use of dport or sport"
+
+# Add a firewall cluster and node config
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw
+litp create -t firewall-node-config -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw
+
+# Add a firewall rule with state property 'none' (lowercase) with the usage of dport/sport
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test1 -o name="214102 test" state="none" dport="22"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test2 -o name="214102 test" state="none" sport="22"
+
+# Add a firewall rules with invalid states
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="NONE"
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="n0n3"
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="NONE,NEW"
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="none,NEW"
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="NONE,ESTABLISHED"
+assertError __state_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="none,ESTABLISHED"
+assertError __state_without_port_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test3 -o name="214102 test" state="none"

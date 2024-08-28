@@ -1,0 +1,39 @@
+# Test to ensure validation when updating algo and string properties
+runLitpScript two-node-std.inc
+
+# Set up algo and string property errors
+let __string_err --err_type ValidationError --err_property string --err_message "You must specify 'string' with the 'algo' property"
+let __string_length_err --err_type ValidationError --err_property string --err_message "Property must be 1-128 characters in length."
+let __algo_err --err_type ValidationError --err_property algo --err_message "You must specify 'algo' with the 'string' property"
+let __algo_invalid_err --err_type ValidationError --err_property algo --err_message "Property must be 'kmp' or 'bm'."
+
+# Add firewall config for cluster and node
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw
+litp create -t firewall-node-config -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw
+
+# Add firewall rule for cluster and node
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -o name="200553 test" algo="kmp" string="200553 test"
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o name="200553 test" algo="kmp" string="200553 test"
+
+# Check firewall rule validation when string property is empty or too long, cluster and node level
+assertError __string_length_err update -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -o string=""
+assertError __string_length_err update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o string=""
+assertError __string_length_err update -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -o string="This String Is 129 Characters, 1 Character Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too!! "
+assertError __string_length_err update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o string="This String Is 129 Characters, 1 Character Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too Long Too!! "
+
+# Check firewall rule validation when algo property is set to an invalid value on cluster and node level
+assertError __algo_invalid_err update -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -o algo="test"
+assertError __algo_invalid_err update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o algo="test"
+
+# Check firewall rule validation when deleting string without algo
+assertError __string_err update -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -d string
+assertError __string_err update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -d string
+
+# Check firewall rule validation when deleting algo without string
+assertError __algo_err update -p /deployments/site1/clusters/cluster1/configs/fw/rules/fw_test -d algo
+assertError __algo_err update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -d algo
+
+# Postitive test cases
+litp update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o string="test_string" algo="bm"
+litp update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o string="test_string"
+litp update -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw/rules/fw_test -o algo="bm"

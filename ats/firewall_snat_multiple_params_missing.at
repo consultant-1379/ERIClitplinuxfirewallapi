@@ -1,0 +1,54 @@
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+# Test for rule with invalid IPV^ parameter
+litp create -p /ms/configs/fw_config -t firewall-node-config
+
+let __err_a --err_message="Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT."
+let __err_b --err_message="Invalid combination of properties, 'chain' must be set to POSTROUTING when 'jump' is set to SNAT."
+let __err_c --err_message="Invalid combination of properties, 'table' must be set to nat when 'jump' is set to MASQUERADE."
+let __err_d --err_message="Invalid 'jump' property when using 'tosource' = 0:0:0:0:0:ffff:a8c:58ec."
+let __err_e --err_message="Invalid 'jump' property when using 'tosource' = 10.140.1.56."
+
+# to source only - rest omitted
+#assertError __err_d create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test22 -o name="903 SNAT" provider=ip6tables destination="0:0:0:0:0:ffff:a8c:5800" tosource="0:0:0:0:0:ffff:a8c:58ec"
+#assertError __err_e create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test32 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56"
+
+# tosource and jump = SNAT - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test6 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT"
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource and jump not SNAT - rest omitted
+assertError __err_e create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test6 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="MASQUERADE"
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to MASQUERADE."
+
+# tosource, jump = SNAT and chain = POSTROUTING - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="POSTROUTING"
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, jump = SNAT and chain not POSTROUTING - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="INPUT"
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, jump, chain = POSTROUTING and proto = tcp - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="POSTROUTING" proto=tcp
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, jump, chain = POSTROUTING and proto = udp - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="POSTROUTING" proto=udp
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, jump, chain = POSTROUTING and proto is not tcp or udp - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="POSTROUTING" proto=icmp
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, jump, chain = POSTROUTING and proto = tcp, table = nat - rest omitted
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test9 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" chain="POSTROUTING" proto=tcp table=nat
+# succeeds
+
+# tosource, jump, chain = POSTROUTING and proto = tcp, table not nat - rest omitted
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test11 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="10.140.1.56" table=raw
+# this actually throws Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT.
+
+# tosource, table = nat - rest omitted
+assertError __err_b create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test22 -o name="904 SNAT" provider=iptables destination="10.140.1.0/24" tosource="10.140.1.56" jump="SNAT" table=nat

@@ -1,0 +1,69 @@
+# ERICLITPlinuxfirewallapi.po.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-27 11:12+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:164
+msgid "INVALID_IP_ADDR"
+msgstr "Invalid IP address value"
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:56
+msgid "MAX_NUMBER_OF_N_PORTS_ACCEPTED"
+msgstr "A maximum of %s ports are accepted."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:85
+msgid "INVALID_RANGE_VALUE"
+msgstr "Invalid range value '%s'"
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:91
+msgid "INVALID_RANGE_VALUE_N_MUST_BE_BEFORE_M"
+msgstr "Invalid range value '%s' must come before '%s'"
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:117
+msgid "S_IS_RESERVED_CHAIN_NUMBER_FOR_DEFAULT_RULES"
+msgstr "'%s' is a reserved chain number for default rules."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:171,183
+msgid "INVALID_PROPERTY_COMBINATION"
+msgstr "Invalid combination of properties, '%s' must be set to %s when '%s' is set to %s."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:177
+msgid "INVALID_PROPERTY_WHEN_USING"
+msgstr "Invalid '%s' property when using '%s' = %s."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:195
+msgid "INVALID_ALL_PROPERTY_COMBINATION"
+msgstr "Invalid combination of properties provider, jump, table, chain and protocol"
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:200
+msgid "MISSING_TOSOURCE_PROPERTY"
+msgstr "Missing 'tosource' property when using 'jump' = SNAT."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:166
+msgid "PROPERTY_NOT_SUPPORTED"
+msgstr "Invalid property value when also using the tosource property."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:252,257
+msgid "DEPENDENT_PROPERTIES"
+msgstr "You must specify '%s' with the '%s' property."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:72
+msgid "IP_RANGE_NEGATION_NOT_SUPPORTED"
+msgstr "IP ranges are not supported with negation."
+
+#: src/linuxfirewall_extension/linuxfirewallextension.py:222
+msgid "STATE_NONE_WITHOUT_PORT"
+msgstr "State 'none' cannot be set without the use of dport or sport"

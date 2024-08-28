@@ -1,0 +1,16 @@
+litp create -p /ms/configs/fw -t firewall-node-config
+litp create -p /ms/configs/fw/rules/fw001 -t firewall-rule -o name=" 2 "
+litp create -p /ms/configs/fw/rules/fw002 -t firewall-rule -o name="2 "
+litp create -p /ms/configs/fw/rules/fw003 -t firewall-rule -o name="2"
+assertError --err_type ValidationError create -p /ms/configs/fw/rules/fw004 -t firewall-rule -o name="basetcp"
+assertError --err_type ValidationError create -p /ms/configs/fw/rules/fw005 -t firewall-rule -o name="2basetcp"
+litp create -p /ms/configs/fw/rules/fw006 -t firewall-rule -o name=" 2 basetcp"
+litp create -p /ms/configs/fw/rules/fw007 -t firewall-rule -o name="2 basetcp"
+litp create -p /ms/configs/fw/rules/fw008 -t firewall-rule -o name="02 basetcp"
+litp create -p /ms/configs/fw/rules/fw009 -t firewall-rule -o name="002 basetcp"
+
+assertError --err_type=ValidationError --err_message='Property cannot be longer than 255' create -p /ms/configs/fw/rules/fw_ligia23 -t firewall-rule -o name="1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111256"
+
+# LITPCDS-10106: 'rawpost' and 'broute' are not valid table values
+assertError --err_type=ValidationError --err_message="Invalid value 'rawpost'." create -t firewall-rule -p /ms/configs/fw/rules/fw_rawpost -o name="102 rawpost" chain="PREROUTING" proto="udp" dport="165" table="rawpost"
+assertError --err_type=ValidationError --err_message="Invalid value 'broute'." create -t firewall-rule -p /ms/configs/fw/rules/fw_broute -o name="103 broute" chain="PREROUTING" proto="udp" dport="165" table="broute"

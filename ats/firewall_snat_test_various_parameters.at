@@ -1,0 +1,90 @@
+# Basic 2 node deployment setup
+runLitpScript two-node-std.inc
+
+# This script tests the following combinations
+# 1. rule with invalid IPV4 address
+# 2. rule with invalid IPV6 address
+# 3. test for rule to fail if jump not SNAT and tosource supplied
+# 4. test for rule created with jump=SNAT and tosource parameter not present
+# 5. rule with proto parameter not tcp or udp
+# 6. test for rule created with valid IPV4 parameters
+# 7. test for rule created with valid IPV6 parameters
+# 8. table must be equal to nat
+
+
+# Expected error messages
+let __err_a --err_message="Invalid IPAddress value '1..2.2.3'"
+let __err_b --err_message="Invalid IPAddress value '0:0:0:0:0:ffff:a8c:58ecdd'"
+let __err_c --err_message="Invalid 'tosource' property when using 'jump' = MASQUERADE."
+let __err_d --err_message="Missing 'tosource' property when using 'jump' = SNAT."
+let __err_e --err_message="Invalid value 'ICMP'."
+let __err_f --err_message="Invalid property value when also using the tosource property."
+let __err_g --err_message="Invalid 'tosource' property when using 'provider' = ip6tables."
+let __err_h --err_message="Invalid combination of properties, 'table' must be set to nat when 'jump' is set to SNAT."
+let __err_i --err_message="Invalid 'jump' property when using 'tosource' = 10.140.1.56."
+let __err_j --err_message="Invalid combination of properties, 'chain' must be set to POSTROUTING when 'jump' is set to SNAT."
+let __err_k --err_message="Invalid combination of properties provider, jump, table, chain and protocol"
+let __err_l --err_message="Invalid value '0:0:0:0:0:ffff:a8c:58ec'. IPv4 Address must be specified"
+
+# Create Configs
+litp create -p /ms/configs/fw_config -t firewall-node-config
+litp create -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw1 -t firewall-node-config
+
+
+# Test conditions
+
+# 1. Test for rule with invalid IPV4 address
+assertError __err_a create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test1 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="1..2.2.3" table=nat
+
+# 3. test for rule to fail if jump is not SNAT and tosource parameter is supplied
+assertError __err_i create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw1/rules/fw_validSNATNodeLevel -o provider=iptables name="903 SNAT" jump="MASQUERADE" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="10.140.1.56" table=nat
+
+# 4. Test for rule created with jump=SNAT and tosource parameter not present
+assertError __err_d create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test3 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp table=nat
+
+# 5. firewall_snat_proto_not_tcp_or_udp
+assertError __err_e create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw1/rules/fw_validSNATNodeLevel1 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=ICMP tosource="10.140.1.56" table=nat
+
+# 6. Test for rule created with valid IPV4 parameters
+assertError __err_l create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test4 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="0:0:0:0:0:ffff:a8c:58ec" table=nat
+
+# 8. table must be equal to nat
+assertError __err_h create -t firewall-rule -p /deployments/site1/clusters/cluster1/nodes/node1/configs/fw1/rules/fw_validSNATNodeLevel2 -o provider=iptables name="903 SNAT" jump="SNAT" chain="POSTROUTING"  source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="10.140.1.56" table=raw
+
+# 9. Chain must be 'POSTROUTING' when the tosource property is provided
+assertError __err_j create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test1 -o provider=iptables name="903 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="1.2.2.3" table=nat
+
+# 10. Change tosource ip address
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test1 -o chain="POSTROUTING" provider=iptables name="903 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="1.2.2.3" tosource="1.2.2.3" table=nat
+litp update -p /ms/configs/fw_config/rules/fw_test1 -o tosource="1.2.34.4"
+
+# 11. Delete tosource option
+assertError __err_d update -p /ms/configs/fw_config/rules/fw_test1 -d tosource
+
+# 12. Delete tosource and change jump
+litp update -p /ms/configs/fw_config/rules/fw_test1 -o jump="MASQUERADE" -d tosource
+
+# 13. Change table parameter from nat to not nat to verify rule fails
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test3 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="1.2.2.3" table=nat
+assertError __err_h update -p /ms/configs/fw_config/rules/fw_test3 -o table=raw
+
+# 14. Change table parameter from nat to not nat to verify rule fails
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test4 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="10.140.1.56" table=nat
+assertError __err_i update -p /ms/configs/fw_config/rules/fw_test4 -o jump="MASQUERADE"
+
+# 15.  change proto parameter from tcp to invalid value
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test5 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=tcp tosource="10.140.1.56" table=nat
+assertError __err_k update -p /ms/configs/fw_config/rules/fw_test5 -o proto=icmp
+
+# 16.  change proto parameter from udp to invalid value
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test6 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=udp tosource="10.140.1.56" table=nat
+assertError __err_k update -p /ms/configs/fw_config/rules/fw_test6 -o proto=icmp
+
+# 17.  change proto parameter from udp to tcp
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test7 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=udp tosource="10.140.1.56" table=nat
+litp update -p /ms/configs/fw_config/rules/fw_test7 -o proto=tcp
+litp update -p /ms/configs/fw_config/rules/fw_test7 -o proto=udp
+
+# 18. Change the provider parameter from iptables to ip6tables to verify rule fails
+litp create -t firewall-rule -p /ms/configs/fw_config/rules/fw_test8 -o chain="POSTROUTING" provider=iptables name="909 SNAT" jump="SNAT" source="10.247.244.0/22" destination="10.140.1.0/24" proto=udp tosource="10.140.1.56" table=nat
+assertError __err_f update -p /ms/configs/fw_config/rules/fw_test8 -o provider=ip6tables

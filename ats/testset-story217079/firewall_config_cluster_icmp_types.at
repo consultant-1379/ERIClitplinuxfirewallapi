@@ -1,0 +1,29 @@
+# Tests to ensure correct validation around icmp type values
+runLitpScript two-node-std.inc
+
+# Add a firewall cluster and node config
+litp create -t firewall-cluster-config -p /deployments/site1/clusters/cluster1/configs/fw
+
+# DTAG item 12:
+# The ICMPv4 types
+#   Redirect (5)
+#   Timestamp Reply (14)
+#   Information Reply (16)
+#   Netmask Reply (18)
+# ICMPv6 types
+#   Router Solicitation (133)
+#   Router Advertisement (134)
+#   Redirect (137)
+# must not be responded to or processed under any circumstances and need to be restricted.
+
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v4_1 -o proto=icmp action=drop provider=iptables name="217079 test5"  icmp=5
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v4_2 -o proto=icmp action=drop provider=iptables name="217079 test14" icmp=14
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v4_3 -o proto=icmp action=drop provider=iptables name="217079 test16" icmp=16
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v4_4 -o proto=icmp action=drop provider=iptables name="217079 test18" icmp=18
+
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v6_1 -o proto=ipv6-icmp action=drop provider=ip6tables name="217079 test133" icmp=133
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v6_2 -o proto=ipv6-icmp action=drop provider=ip6tables name="217079 test134" icmp=134
+litp create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v6_3 -o proto=ipv6-icmp action=drop provider=ip6tables name="217079 test137" icmp=137
+
+let __string_err --err_type ValidationError --err_property icmp --err_message "Invalid value '338'."
+assertError __string_err create -t firewall-rule -p /deployments/site1/clusters/cluster1/configs/fw/rules/fwr_v4_5 -o proto=icmp provider=iptables action=drop name="217079 test338" icmp=338
